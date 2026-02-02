@@ -10,12 +10,18 @@ interface GroupedApprovalsProps {
   groups: ActivityGroup[];
   isMobile: boolean;
   onDetails?: (id: string) => void;
+  selectedIds?: Set<string>;
+  onSelectionChange?: (id: string) => void;
+  onSelectAllInGroup?: (ids: string[], checked: boolean) => void;
 }
 
 export function GroupedApprovals({
   groups,
   isMobile,
   onDetails,
+  selectedIds = new Set(),
+  onSelectionChange,
+  onSelectAllInGroup,
 }: GroupedApprovalsProps) {
   // Track which groups are expanded (default: all expanded)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
@@ -184,6 +190,13 @@ export function GroupedApprovals({
                         isLoading={false}
                         error={null}
                         onDetails={onDetails}
+                        selectedIds={selectedIds}
+                        onSelectionChange={onSelectionChange}
+                        onSelectAll={
+                          onSelectAllInGroup
+                            ? (checked) => onSelectAllInGroup(group.items.map((a) => a.id), checked)
+                            : undefined
+                        }
                       />
                     ) : (
                       <ApprovalsTable
@@ -191,6 +204,13 @@ export function GroupedApprovals({
                         isLoading={false}
                         error={null}
                         onDetails={onDetails}
+                        selectedIds={selectedIds}
+                        onSelectionChange={onSelectionChange}
+                        onSelectAll={
+                          onSelectAllInGroup
+                            ? (checked) => onSelectAllInGroup(group.items.map((a) => a.id), checked)
+                            : undefined
+                        }
                       />
                     )}
                   </div>

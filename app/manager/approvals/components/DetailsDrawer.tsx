@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ActivityForApproval } from '../types';
 import { formatTime, formatDate, formatDuration } from '../utils';
+import { ACTIVITY_TYPES } from '../constants';
 
 interface DetailsDrawerProps {
   activity: ActivityForApproval | null;
@@ -10,17 +11,6 @@ interface DetailsDrawerProps {
   onClose: () => void;
   onApprove: (id: string, activityType: string, managerNote: string) => void;
 }
-
-const ACTIVITY_TYPES = [
-  'Harvest',
-  'Spraying',
-  'Irrigation',
-  'Planting',
-  'Weeding',
-  'Fertilizing',
-  'Pruning',
-  'Monitoring',
-];
 
 const MAX_NOTE_LENGTH = 300;
 

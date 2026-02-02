@@ -9,6 +9,9 @@ interface ApprovalsCardProps {
   isLoading?: boolean;
   error?: string | null;
   onDetails?: (id: string) => void;
+  selectedIds?: Set<string>;
+  onSelectionChange?: (id: string) => void;
+  onSelectAll?: (checked: boolean) => void;
 }
 
 export function ApprovalsCard({
@@ -16,6 +19,9 @@ export function ApprovalsCard({
   isLoading,
   error,
   onDetails,
+  selectedIds = new Set(),
+  onSelectionChange,
+  onSelectAll,
 }: ApprovalsCardProps) {
   if (error) {
     return (
@@ -49,13 +55,28 @@ export function ApprovalsCard({
     return <EmptyState />;
   }
 
+  const allSelected = activities.length > 0 && activities.every((a) => selectedIds.has(a.id));
+
   return (
     <div className="space-y-4">
+      {onSelectAll && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => onSelectAll(!allSelected)}
+            className="text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+          >
+            {allSelected ? 'Clear selection' : 'Select all'}
+          </button>
+        </div>
+      )}
       {activities.map((activity) => (
         <ActivityCard
           key={activity.id}
           activity={activity}
           onDetails={onDetails}
+          isSelected={selectedIds.has(activity.id)}
+          onToggleSelect={onSelectionChange ? () => onSelectionChange(activity.id) : undefined}
         />
       ))}
     </div>

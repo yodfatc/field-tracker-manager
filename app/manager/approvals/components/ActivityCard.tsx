@@ -1,14 +1,16 @@
 import { ActivityForApproval } from '../types';
-import { formatTime, formatDuration } from '../utils';
+import { formatTime, formatDuration, formatDate } from '../utils';
 import { StatusBadge } from './StatusBadge';
 import { ActionButtons } from './ActionButtons';
 
 interface ActivityCardProps {
   activity: ActivityForApproval;
   onDetails?: (id: string) => void;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
 }
 
-export function ActivityCard({ activity, onDetails }: ActivityCardProps) {
+export function ActivityCard({ activity, onDetails, isSelected, onToggleSelect }: ActivityCardProps) {
   const handleCardClick = () => {
     if (onDetails) {
       onDetails(activity.id);
@@ -20,15 +22,28 @@ export function ActivityCard({ activity, onDetails }: ActivityCardProps) {
       onClick={handleCardClick}
       className="cursor-pointer rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
     >
-      {/* Header */}
-      <div className="mb-3 flex items-start justify-between">
-        <div>
-          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-            {activity.workerName}
-          </h3>
-          <p className="mt-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-            {activity.plotName}
-          </p>
+      {/* Header: checkbox (when selection enabled), Date, Status */}
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          {onToggleSelect && (
+            <div onClick={(e) => e.stopPropagation()} className="flex-shrink-0 pt-0.5">
+              <input
+                type="checkbox"
+                checked={!!isSelected}
+                onChange={onToggleSelect}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+                aria-label={`Select ${activity.workerName}`}
+              />
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              {formatDate(activity.enterTime)}
+            </p>
+            <p className="mt-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Plot: <span className="font-medium">{activity.plotName}</span>
+            </p>
+          </div>
         </div>
         <StatusBadge status={activity.status} />
       </div>
@@ -36,11 +51,26 @@ export function ActivityCard({ activity, onDetails }: ActivityCardProps) {
       {/* Activity Type */}
       <div className="mb-3">
         <span className="text-sm text-gray-600 dark:text-gray-400">
-          Activity: <span className="font-medium">{activity.activityType}</span>
+          Activity Type: <span className="font-medium">{activity.activityType}</span>
         </span>
       </div>
 
-      {/* Times */}
+      {/* Worker Name */}
+      <div className="mb-3">
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          Worker: <span className="font-medium">{activity.workerName}</span>
+        </span>
+      </div>
+
+      {/* Duration */}
+      <div className="mb-3">
+        <span className="text-sm text-gray-500 dark:text-gray-400">Duration: </span>
+        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+          {formatDuration(activity.duration)}
+        </span>
+      </div>
+
+      {/* Enter Time / Exit Time */}
       <div className="mb-3 grid grid-cols-2 gap-3 text-sm">
         <div>
           <span className="text-gray-500 dark:text-gray-400">Enter:</span>
@@ -66,15 +96,7 @@ export function ActivityCard({ activity, onDetails }: ActivityCardProps) {
         </div>
       </div>
 
-      {/* Duration */}
-      <div className="mb-3">
-        <span className="text-sm text-gray-500 dark:text-gray-400">Duration: </span>
-        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-          {formatDuration(activity.duration)}
-        </span>
-      </div>
-
-      {/* Note indicator */}
+      {/* Note indicator (optional) */}
       {activity.note && (
         <div className="mb-3 flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
           <svg

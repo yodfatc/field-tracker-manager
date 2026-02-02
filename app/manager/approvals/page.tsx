@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { ActivityForApproval } from './types';
 import { generateMockActivities } from './mock-data';
 import { ApprovalsTable } from './components/ApprovalsTable';
@@ -9,6 +9,7 @@ import { DetailsDrawer } from './components/DetailsDrawer';
 import { Toast } from './components/Toast';
 import { GroupedApprovals } from './components/GroupedApprovals';
 import { GroupMode, groupActivities, getLocalDayKey } from './grouping';
+import { ACTIVITY_TYPES } from './constants';
 
 export default function ApprovalsPage() {
   const [activities, setActivities] = useState<ActivityForApproval[]>([]);
@@ -17,10 +18,14 @@ export default function ApprovalsPage() {
   const [isMobile, setIsMobile] = useState(false);
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
-  
+
+  // Bulk selection state (managed in page, passed down)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkActivityType, setBulkActivityType] = useState<string>('');
+
   // Grouping mode state
   const [groupMode, setGroupMode] = useState<GroupMode>('day');
-  
+
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'CHECKED' | 'APPROVED'>('ALL');
@@ -62,7 +67,6 @@ export default function ApprovalsPage() {
   };
 
   const handleApprove = (id: string, activityType: string, managerNote: string) => {
-    // Update the activity status to APPROVED in local state
     setActivities((prevActivities) =>
       prevActivities.map((activity) =>
         activity.id === id
@@ -70,10 +74,46 @@ export default function ApprovalsPage() {
           : activity
       )
     );
-
-    // Show toast notification
     setShowToast(true);
   };
+
+  const toggleSelection = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const selectAllInGroup = useCallback((ids: string[], checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) ids.forEach((id) => next.add(id));
+      else ids.forEach((id) => next.delete(id));
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+    setBulkActivityType('');
+  }, []);
+
+  const handleBulkApprove = useCallback(() => {
+    if (!bulkActivityType.trim()) return;
+    const ids = Array.from(selectedIds);
+    setActivities((prevActivities) =>
+      prevActivities.map((activity) =>
+        ids.includes(activity.id)
+          ? { ...activity, status: 'APPROVED', activityType: bulkActivityType }
+          : activity
+      )
+    );
+    setSelectedIds(new Set());
+    setBulkActivityType('');
+    setShowToast(true);
+  }, [selectedIds, bulkActivityType]);
 
   // Apply filters first
   const filteredActivities = useMemo(() => {
@@ -115,7 +155,9 @@ export default function ApprovalsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div
+        className={`mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 ${selectedIds.size > 0 ? 'pb-24' : ''}`}
+      >
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             Manager Approvals
@@ -152,6 +194,16 @@ export default function ApprovalsPage() {
                 }`}
               >
                 Worker
+              </button>
+              <button
+                onClick={() => setGroupMode('plot')}
+                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  groupMode === 'plot'
+                    ? 'bg-blue-600 text-white dark:bg-blue-500'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                Plot
               </button>
             </div>
           </div>
@@ -225,9 +277,55 @@ export default function ApprovalsPage() {
             groups={groups}
             isMobile={isMobile}
             onDetails={handleDetails}
+            selectedIds={selectedIds}
+            onSelectionChange={toggleSelection}
+            onSelectAllInGroup={selectAllInGroup}
           />
         )}
       </div>
+
+      {/* Floating Action Bar when one or more activities are selected */}
+      {selectedIds.size > 0 && (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-20 flex flex-wrap items-center justify-center gap-4 border-t border-gray-200 bg-white px-4 py-3 shadow-lg dark:border-gray-700 dark:bg-gray-800 sm:justify-between sm:px-6"
+          role="region"
+          aria-label="Bulk actions"
+        >
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {selectedIds.size} {selectedIds.size === 1 ? 'activity' : 'activities'} selected
+          </span>
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              value={bulkActivityType}
+              onChange={(e) => setBulkActivityType(e.target.value)}
+              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+              aria-label="Activity type for bulk approve"
+            >
+              <option value="">Select activity type</option>
+              {ACTIVITY_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={handleBulkApprove}
+              disabled={!bulkActivityType.trim()}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
+            >
+              Bulk Approve
+            </button>
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       <DetailsDrawer
         activity={selectedActivity}
