@@ -14,3 +14,12 @@ export interface ActivityForApproval {
   createdAt: string; // ISO string
   updatedAt: string; // ISO string
 }
+
+export interface RealDataRow {
+  date: string;
+  plot: string;
+  worker: string;
+  duration: string | null;
+  enter_plot: string;
+  exit_plot: string | null;
+}

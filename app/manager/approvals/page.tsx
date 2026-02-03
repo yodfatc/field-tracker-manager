@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 import { ActivityForApproval } from './types';
 import { generateMockActivities } from './mock-data';
 import { ApprovalsTable } from './components/ApprovalsTable';
@@ -163,9 +164,17 @@ export default function ApprovalsPage() {
         className={`mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 ${selectedIds.size > 0 ? 'pb-24' : ''}`}
       >
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            Manager Approvals
-          </h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              Manager Approvals
+            </h1>
+            <Link
+              href="/manager/real-data"
+              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+            >
+              נתונים אמיתיים
+            </Link>
+          </div>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Review and approve worker activities
           </p>
