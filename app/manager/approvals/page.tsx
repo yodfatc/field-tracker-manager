@@ -172,7 +172,7 @@ export default function ApprovalsPage() {
               href="/manager/real-data"
               className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
             >
-              נתונים אמיתיים
+              View Real Data
             </Link>
           </div>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
