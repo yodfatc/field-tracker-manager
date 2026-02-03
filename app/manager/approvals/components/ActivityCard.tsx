@@ -8,9 +8,10 @@ interface ActivityCardProps {
   onDetails?: (id: string) => void;
   isSelected?: boolean;
   onToggleSelect?: () => void;
+  selectedCount?: number;
 }
 
-export function ActivityCard({ activity, onDetails, isSelected, onToggleSelect }: ActivityCardProps) {
+export function ActivityCard({ activity, onDetails, isSelected, onToggleSelect, selectedCount = 0 }: ActivityCardProps) {
   const handleCardClick = () => {
     if (onDetails) {
       onDetails(activity.id);
@@ -123,7 +124,7 @@ export function ActivityCard({ activity, onDetails, isSelected, onToggleSelect }
         onClick={(e) => e.stopPropagation()}
       >
         <ActionButtons
-          onDetails={onDetails ? () => onDetails(activity.id) : undefined}
+          onDetails={onDetails && selectedCount <= 1 ? () => onDetails(activity.id) : undefined}
         />
       </div>
     </div>

@@ -24,12 +24,16 @@ export default function ApprovalsPage() {
   const [bulkActivityType, setBulkActivityType] = useState<string>('');
 
   // Grouping mode state
-  const [groupMode, setGroupMode] = useState<GroupMode>('day');
+  const [groupMode, setGroupMode] = useState<GroupMode>('plot');
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'CHECKED' | 'APPROVED'>('ALL');
-  const [dayFilter, setDayFilter] = useState<string>(''); // YYYY-MM-DD format or empty string
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'NEW' | 'PENDING' | 'APPROVED'>('ALL');
+  const [dayFilter, setDayFilter] = useState<string>(() => {
+    // Default to today's date in YYYY-MM-DD format
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  });
 
   useEffect(() => {
     // Simulate loading
@@ -169,45 +173,6 @@ export default function ApprovalsPage() {
 
         {/* Controls: Filters and Group By */}
         <div className="mb-6 space-y-4">
-          {/* Group By Control */}
-          <div className="flex items-center gap-4">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Group by:
-            </label>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setGroupMode('day')}
-                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                  groupMode === 'day'
-                    ? 'bg-blue-600 text-white dark:bg-blue-500'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-                }`}
-              >
-                Day
-              </button>
-              <button
-                onClick={() => setGroupMode('worker')}
-                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                  groupMode === 'worker'
-                    ? 'bg-blue-600 text-white dark:bg-blue-500'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-                }`}
-              >
-                Worker
-              </button>
-              <button
-                onClick={() => setGroupMode('plot')}
-                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                  groupMode === 'plot'
-                    ? 'bg-blue-600 text-white dark:bg-blue-500'
-                    : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
-                }`}
-              >
-                Plot
-              </button>
-            </div>
-          </div>
-
           {/* Filters */}
           <div className="flex flex-wrap gap-4">
             {/* Search Filter */}
@@ -228,8 +193,8 @@ export default function ApprovalsPage() {
               className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
             >
               <option value="ALL">All Status</option>
+              <option value="NEW">New</option>
               <option value="PENDING">Pending</option>
-              <option value="CHECKED">Checked</option>
               <option value="APPROVED">Approved</option>
             </select>
 
@@ -248,6 +213,55 @@ export default function ApprovalsPage() {
                 Clear Date
               </button>
             )}
+          </div>
+
+          {/* Group By Control */}
+          <div className="flex items-center gap-4">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Group by:
+            </label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setGroupMode('date')}
+                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  groupMode === 'date'
+                    ? 'bg-blue-600 text-white dark:bg-blue-500'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                Date
+              </button>
+              <button
+                onClick={() => setGroupMode('plot')}
+                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  groupMode === 'plot'
+                    ? 'bg-blue-600 text-white dark:bg-blue-500'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                Plot
+              </button>
+              <button
+                onClick={() => setGroupMode('worker')}
+                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  groupMode === 'worker'
+                    ? 'bg-blue-600 text-white dark:bg-blue-500'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                Worker
+              </button>
+              <button
+                onClick={() => setGroupMode('none')}
+                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  groupMode === 'none'
+                    ? 'bg-blue-600 text-white dark:bg-blue-500'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                Ungroup
+              </button>
+            </div>
           </div>
         </div>
 
@@ -287,7 +301,7 @@ export default function ApprovalsPage() {
       {/* Floating Action Bar when one or more activities are selected */}
       {selectedIds.size > 0 && (
         <div
-          className="fixed bottom-0 left-0 right-0 z-20 flex flex-wrap items-center justify-center gap-4 border-t border-gray-200 bg-white px-4 py-3 shadow-lg dark:border-gray-700 dark:bg-gray-800 sm:justify-between sm:px-6"
+          className="fixed bottom-0 left-0 right-0 z-20 flex flex-wrap items-center justify-center gap-4 border-t border-gray-200 bg-green-50 px-4 py-3 shadow-xl dark:border-gray-700 dark:bg-green-900/20 sm:justify-center sm:px-6"
           role="region"
           aria-label="Bulk actions"
         >

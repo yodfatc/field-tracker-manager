@@ -5,6 +5,7 @@ import { ActivityGroup } from '../grouping';
 import { ApprovalsTable } from './ApprovalsTable';
 import { ApprovalsCard } from './ApprovalsCard';
 import { formatDate } from '../utils';
+import { StatusBadge } from './StatusBadge';
 
 interface GroupedApprovalsProps {
   groups: ActivityGroup[];
@@ -152,26 +153,28 @@ export function GroupedApprovals({
                       <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                         {group.title}
                       </h2>
-                      {/* Date Sublabel for day groups */}
-                      {group.date && (
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {formatDate(`${group.date}T00:00:00`)}
-                        </span>
-                      )}
                     </div>
                   </div>
                   {/* Counts */}
-                  <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                    <span>Total: {group.counts.total}</span>
+                  <div className="flex items-center gap-3 text-sm">
+                    <span className="text-gray-600 dark:text-gray-400">Total: {group.counts.total}</span>
+                    {group.counts.new > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <StatusBadge status="NEW" />
+                        <span className="text-gray-600 dark:text-gray-400">{group.counts.new}</span>
+                      </div>
+                    )}
                     {group.counts.pending > 0 && (
-                      <span className="text-yellow-600 dark:text-yellow-400">
-                        Pending: {group.counts.pending}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <StatusBadge status="PENDING" />
+                        <span className="text-gray-600 dark:text-gray-400">{group.counts.pending}</span>
+                      </div>
                     )}
                     {group.counts.approved > 0 && (
-                      <span className="text-green-600 dark:text-green-400">
-                        Approved: {group.counts.approved}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <StatusBadge status="APPROVED" />
+                        <span className="text-gray-600 dark:text-gray-400">{group.counts.approved}</span>
+                      </div>
                     )}
                   </div>
                 </div>

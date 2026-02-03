@@ -1,17 +1,14 @@
 import { ActivityForApproval } from './types';
 
-export type GroupMode = 'day' | 'worker' | 'plot';
+export type GroupMode = 'date' | 'worker' | 'plot' | 'none';
 
 export type ActivityGroup = {
   key: string;
   title: string;
-  date?: string;
-  workerId?: string;
-  plotId?: string;
   counts: {
     total: number;
-    pending: number;
-    checked: number;
+    new: number;      // במקום pending
+    pending: number;  // במקום checked
     approved: number;
     missingExit: number;
   };
@@ -24,24 +21,26 @@ export function getLocalDayKey(isoString: string | null): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
-export function formatDayTitle(dateKey: string): string {
-  if (dateKey === 'no-date') return 'No Date';
-  const [year, month, day] = dateKey.split('-').map(Number);
-  const targetDate = new Date(year, month - 1, day);
-  return targetDate.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-}
-
 export function groupActivities(
   activities: ActivityForApproval[],
-  mode: GroupMode = 'day'
+  mode: GroupMode = 'plot'
 ): ActivityGroup[] {
   if (activities.length === 0) return [];
+
+  if (mode === 'none') {
+    return [{
+      key: 'all',
+      title: 'All Activities',
+      counts: calculateCounts(activities),
+      items: activities.sort((a, b) => new Date(b.enterTime || 0).getTime() - new Date(a.enterTime || 0).getTime())
+    }];
+  }
 
   const groupsMap = new Map<string, ActivityForApproval[]>();
 
   for (const activity of activities) {
     let key = '';
-    if (mode === 'day') key = getLocalDayKey(activity.enterTime);
+    if (mode === 'date') key = getLocalDayKey(activity.enterTime);
     else if (mode === 'worker') key = activity.workerId;
     else if (mode === 'plot') key = activity.plotId;
 
@@ -49,38 +48,30 @@ export function groupActivities(
     groupsMap.get(key)!.push(activity);
   }
 
-  const groups: ActivityGroup[] = [];
-  for (const [key, items] of groupsMap.entries()) {
-    // מיון פנימי בתוך הקבוצה לפי הבקשה שלך
-    if (mode === 'day') {
-      // Group by DAY: sort by Plot Name (A–Z)
+  return Array.from(groupsMap.entries()).map(([key, items]) => {
+    // מיון פנימי
+    if (mode === 'date') {
       items.sort((a, b) => a.plotName.localeCompare(b.plotName));
-    } else if (mode === 'worker') {
-      // Group by WORKER: sort by Date/Time (newest to oldest)
-      items.sort((a, b) => new Date(b.enterTime || 0).getTime() - new Date(a.enterTime || 0).getTime());
-    } else if (mode === 'plot') {
-      // Group by PLOT: sort by Date/Time (newest to oldest)
+    } else {
       items.sort((a, b) => new Date(b.enterTime || 0).getTime() - new Date(a.enterTime || 0).getTime());
     }
 
-    groups.push({
+    return {
       key,
-      title: mode === 'day' ? formatDayTitle(key) : (mode === 'worker' ? items[0].workerName : items[0].plotName),
-      date: mode === 'day' && key !== 'no-date' ? key : undefined,
-      counts: {
-        total: items.length,
-        pending: items.filter(a => a.status === 'PENDING').length,
-        checked: items.filter(a => a.status === 'CHECKED').length,
-        approved: items.filter(a => a.status === 'APPROVED').length,
-        missingExit: items.filter(a => a.hasMissingExit).length,
-      },
+      title: mode === 'date' ? (items[0].enterTime ? new Date(items[0].enterTime).toLocaleDateString('he-IL') : 'ללא תאריך') 
+             : (mode === 'worker' ? items[0].workerName : items[0].plotName),
+      counts: calculateCounts(items),
       items,
-    });
-  }
+    };
+  }).sort((a, b) => a.title.localeCompare(b.title));
+}
 
-  // מיון הקבוצות עצמן
-  if (mode === 'day') groups.sort((a, b) => b.key.localeCompare(a.key));
-  else groups.sort((a, b) => a.title.localeCompare(b.title));
-
-  return groups;
+function calculateCounts(items: ActivityForApproval[]) {
+  return {
+    total: items.length,
+    new: items.filter((a) => a.status === 'NEW').length,
+    pending: items.filter((a) => a.status === 'PENDING').length,
+    approved: items.filter((a) => a.status === 'APPROVED').length,
+    missingExit: items.filter((a) => a.hasMissingExit).length,
+  };
 }

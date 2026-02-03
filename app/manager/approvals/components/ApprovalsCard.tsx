@@ -77,6 +77,7 @@ export function ApprovalsCard({
           onDetails={onDetails}
           isSelected={selectedIds.has(activity.id)}
           onToggleSelect={onSelectionChange ? () => onSelectionChange(activity.id) : undefined}
+          selectedCount={selectedIds.size}
         />
       ))}
     </div>

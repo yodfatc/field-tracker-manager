@@ -118,6 +118,9 @@ export function ApprovalsTable({
               Exit Time
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+              Notes
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
               Status
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
@@ -133,6 +136,7 @@ export function ApprovalsTable({
               onDetails={onDetails}
               isSelected={selectedIds.has(activity.id)}
               onToggleSelect={onSelectionChange ? () => onSelectionChange(activity.id) : undefined}
+              selectedCount={selectedIds.size}
             />
           ))}
         </tbody>

@@ -71,17 +71,17 @@ function randomDayInLastWeek(): Date {
 export function generateMockActivities(): ActivityForApproval[] {
   const activities: ActivityForApproval[] = [];
   
-  // Status distribution: mostly PENDING, some CHECKED, some APPROVED
-  const statuses: Array<'PENDING' | 'CHECKED' | 'APPROVED'> = [
+  // Status distribution: mostly NEW, some PENDING, some APPROVED
+  const statuses: Array<'NEW' | 'PENDING' | 'APPROVED'> = [
+    'NEW',
+    'NEW',
+    'NEW',
+    'NEW',
+    'NEW',
+    'NEW',
+    'NEW',
     'PENDING',
     'PENDING',
-    'PENDING',
-    'PENDING',
-    'PENDING',
-    'PENDING',
-    'PENDING',
-    'CHECKED',
-    'CHECKED',
     'APPROVED',
   ];
 

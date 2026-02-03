@@ -8,9 +8,10 @@ interface ActivityRowProps {
   onDetails?: (id: string) => void;
   isSelected?: boolean;
   onToggleSelect?: () => void;
+  selectedCount?: number;
 }
 
-export function ActivityRow({ activity, onDetails, isSelected, onToggleSelect }: ActivityRowProps) {
+export function ActivityRow({ activity, onDetails, isSelected, onToggleSelect, selectedCount = 0 }: ActivityRowProps) {
   const handleRowClick = () => {
     if (onDetails) {
       onDetails(activity.id);
@@ -64,12 +65,15 @@ export function ActivityRow({ activity, onDetails, isSelected, onToggleSelect }:
           )}
         </div>
       </td>
+      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
+        {activity.note || '-'}
+      </td>
       <td className="px-4 py-3">
         <StatusBadge status={activity.status} />
       </td>
       <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
         <ActionButtons
-          onDetails={onDetails ? () => onDetails(activity.id) : undefined}
+          onDetails={onDetails && selectedCount <= 1 ? () => onDetails(activity.id) : undefined}
         />
       </td>
     </tr>

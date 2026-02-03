@@ -8,7 +8,7 @@ export interface ActivityForApproval {
   enterTime: string | null; // ISO string, null if missing
   exitTime: string | null; // ISO string, null if missing exit
   duration: number | null; // in minutes, null if missing exit
-  status: 'PENDING' | 'CHECKED' | 'APPROVED';
+  status: 'NEW' | 'PENDING' | 'APPROVED';
   note?: string; // Optional short note
   hasMissingExit: boolean; // Warning flag (true when exitTime is null)
   createdAt: string; // ISO string
