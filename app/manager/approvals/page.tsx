@@ -176,12 +176,12 @@ export default function ApprovalsPage() {
         <div className="mb-6 space-y-4">
           {/* Filters */}
           <div className="flex flex-wrap gap-4">
-            <Link
+            <a
               href="/manager/real-data"
-              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 shrink-0"
+              className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 shrink-0 inline-block"
             >
               View Real Data
-            </Link>
+            </a>
             {/* Search Filter */}
             <div className="flex-1 min-w-[200px]">
               <input

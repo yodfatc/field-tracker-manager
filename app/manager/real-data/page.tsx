@@ -14,8 +14,12 @@ export default function RealDataPage() {
     let cancelled = false;
     setIsLoading(true);
     setError(null);
-    supabase
-      .rpc('get_worker_plot_segments')
+    if (!supabase) {
+      setError('Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local');
+      setIsLoading(false);
+      return;
+    }
+    void Promise.resolve(supabase.rpc('get_worker_plot_segments'))
       .then(({ data: rows, error: rpcError }) => {
         if (cancelled) return;
         if (rpcError) {
