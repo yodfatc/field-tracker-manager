@@ -9,13 +9,15 @@ export default function RealDataPage() {
   const [data, setData] = useState<RealDataRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [configMissing, setConfigMissing] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
     setError(null);
+    setConfigMissing(false);
     if (!supabase) {
-      setError('Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to .env.local');
+      setConfigMissing(true);
       setIsLoading(false);
       return;
     }
@@ -58,7 +60,15 @@ export default function RealDataPage() {
           </div>
         )}
 
-        {!error && isLoading && (
+        {configMissing && (
+          <div className="mb-6 rounded-lg border border-gray-200 bg-white py-12 text-center dark:border-gray-700 dark:bg-gray-900">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              To load real data, add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to `.env` or `.env.local` and restart the dev server.
+            </p>
+          </div>
+        )}
+
+        {!error && !configMissing && isLoading && (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-800">
@@ -88,7 +98,7 @@ export default function RealDataPage() {
           </div>
         )}
 
-        {!error && !isLoading && data.length === 0 && (
+        {!error && !configMissing && !isLoading && data.length === 0 && (
           <div className="rounded-lg border border-gray-200 bg-white py-12 text-center dark:border-gray-700 dark:bg-gray-900">
             <p className="text-sm text-gray-500 dark:text-gray-400">
               No data available
@@ -96,7 +106,7 @@ export default function RealDataPage() {
           </div>
         )}
 
-        {!error && !isLoading && data.length > 0 && (
+        {!error && !configMissing && !isLoading && data.length > 0 && (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800">
