@@ -52,22 +52,30 @@ export default function RealDataPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             Real Data
           </h1>
+          {!configMissing && (
+            <span className="text-xs text-gray-400 dark:text-gray-500">Supabase: configured</span>
+          )}
         </div>
 
         {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-            <p className="text-sm text-red-800 dark:text-red-400">{error}</p>
+          <div className="mb-6">
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+              <p className="text-sm text-red-800 dark:text-red-400">{error}</p>
+            </div>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              Check that your Supabase project has a function named <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">get_worker_plot_segments</code> and that <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">NEXT_PUBLIC_SUPABASE_URL</code> and <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> match that project.
+            </p>
           </div>
         )}
 
         {configMissing && (
-          <div className="mb-6 rounded-lg border border-gray-200 bg-white py-12 px-6 text-center dark:border-gray-700 dark:bg-gray-900">
-            <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
-              To load real data, add <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">NEXT_PUBLIC_SUPABASE_URL</code> and <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to a file named <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">.env</code> or <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">.env.local</code> in the project root (same folder as package.json). No spaces around the <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">=</code> sign.
-            </p>
-            <p className="mt-3 text-sm font-medium text-gray-700 dark:text-gray-300">
-              If you already added them: stop the dev server (Ctrl+C), then run <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">npm run dev</code> again. Next.js only reads env when the server starts.
-            </p>
+          <div className="mb-6 rounded-lg border border-gray-200 bg-white py-12 px-6 dark:border-gray-700 dark:bg-gray-900">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">To load real data, set the env vars. If you already did and still see this, check:</p>
+            <ul className="text-sm text-gray-500 dark:text-gray-400 list-disc list-inside space-y-2 max-w-xl mx-auto text-left">
+              <li><strong>Restart the dev server</strong> – Next.js reads .env only at start. Stop with Ctrl+C, then run <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">npm run dev</code> again.</li>
+              <li><strong>File and location</strong> – Use a file named exactly <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">.env</code> or <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">.env.local</code> in the <strong>project root</strong> (same folder as <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">package.json</code>).</li>
+              <li><strong>Variable names</strong> – Exactly <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">NEXT_PUBLIC_SUPABASE_URL</code> and <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">NEXT_PUBLIC_SUPABASE_ANON_KEY</code>, with no spaces around <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">=</code>.</li>
+            </ul>
           </div>
         )}
 
