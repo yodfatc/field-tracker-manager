@@ -108,6 +108,19 @@ export default function RealDataPage() {
                 Server env check: URL set: {envCheck.supabaseUrlSet ? 'yes' : 'no'}, Key set: {envCheck.supabaseKeySet ? 'yes' : 'no'}.
               </p>
             )}
+            {envCheck && !envCheck.supabaseUrlSet && !envCheck.supabaseKeySet && (
+              <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 py-4 px-4 dark:border-amber-800 dark:bg-amber-900/20">
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">The server does not see your env vars. Do this:</p>
+                <ol className="text-sm text-amber-700 dark:text-amber-300 list-decimal list-inside space-y-2">
+                  <li>Open the <strong>project root</strong> (the folder that contains <code className="bg-amber-100 dark:bg-amber-900/50 px-1 rounded">package.json</code>).</li>
+                  <li>Create a file named exactly <code className="bg-amber-100 dark:bg-amber-900/50 px-1 rounded">.env.local</code> there (on Windows, enable “Show file extensions” so the name is not <code className="bg-amber-100 dark:bg-amber-900/50 px-1 rounded">.env.local.txt</code>).</li>
+                  <li>Inside the file, add two lines (replace with your real values from the Supabase project dashboard):
+                    <pre className="mt-2 p-2 rounded bg-amber-100 dark:bg-amber-900/50 text-left overflow-x-auto text-xs">{`NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co\nNEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here`}</pre>
+                  </li>
+                  <li>Save the file, then <strong>stop the dev server</strong> (Ctrl+C in the terminal) and run <code className="bg-amber-100 dark:bg-amber-900/50 px-1 rounded">npm run dev</code> again. Next.js only reads .env when it starts.</li>
+                </ol>
+              </div>
+            )}
             <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
               Showing sample data. Set Supabase env vars and restart the dev server to load real data.
             </p>
