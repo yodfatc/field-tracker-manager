@@ -1,7 +1,10 @@
-import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server';
+
+export const runtime = 'nodejs';
 
 export async function GET() {
-  const supabaseUrlSet = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL)
-  const supabaseKeySet = Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
-  return NextResponse.json({ supabaseUrlSet, supabaseKeySet })
+  return NextResponse.json({
+    supabaseUrlSet: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+    supabaseKeySet: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+  });
 }
