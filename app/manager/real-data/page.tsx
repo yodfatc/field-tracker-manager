@@ -5,11 +5,20 @@ import Link from 'next/link';
 import { supabase } from '@/app/lib/supabase';
 import { RealDataRow } from '../approvals/types';
 
+const SAMPLE_ROWS: RealDataRow[] = [
+  { date: '2026-02-04', plot: 'Central Field E', worker: 'Sample Worker', duration: '45', enter_plot: '08:00', exit_plot: '08:45' },
+  { date: '2026-02-04', plot: 'North Plot A', worker: 'Another Worker', duration: '120', enter_plot: '09:00', exit_plot: '11:00' },
+  { date: '2026-02-03', plot: 'Central Field E', worker: 'Sample Worker', duration: null, enter_plot: '14:00', exit_plot: null },
+];
+
+type EnvCheck = { supabaseUrlSet: boolean; supabaseKeySet: boolean } | null
+
 export default function RealDataPage() {
   const [data, setData] = useState<RealDataRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [configMissing, setConfigMissing] = useState(false);
+  const [envCheck, setEnvCheck] = useState<EnvCheck>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -38,6 +47,22 @@ export default function RealDataPage() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!configMissing) return;
+    let cancelled = false;
+    fetch('/api/check-env')
+      .then((res) => res.json())
+      .then((body: { supabaseUrlSet: boolean; supabaseKeySet: boolean }) => {
+        if (!cancelled) setEnvCheck(body);
+      })
+      .catch(() => {
+        if (!cancelled) setEnvCheck(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [configMissing]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black">
@@ -69,14 +94,50 @@ export default function RealDataPage() {
         )}
 
         {configMissing && (
-          <div className="mb-6 rounded-lg border border-gray-200 bg-white py-12 px-6 dark:border-gray-700 dark:bg-gray-900">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">To load real data, set the env vars. If you already did and still see this, check:</p>
-            <ul className="text-sm text-gray-500 dark:text-gray-400 list-disc list-inside space-y-2 max-w-xl mx-auto text-left">
-              <li><strong>Restart the dev server</strong> – Next.js reads .env only at start. Stop with Ctrl+C, then run <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">npm run dev</code> again.</li>
-              <li><strong>File and location</strong> – Use a file named exactly <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">.env</code> or <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">.env.local</code> in the <strong>project root</strong> (same folder as <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">package.json</code>).</li>
-              <li><strong>Variable names</strong> – Exactly <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">NEXT_PUBLIC_SUPABASE_URL</code> and <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">NEXT_PUBLIC_SUPABASE_ANON_KEY</code>, with no spaces around <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">=</code>.</li>
-            </ul>
-          </div>
+          <>
+            <div className="mb-6 rounded-lg border border-gray-200 bg-white py-12 px-6 dark:border-gray-700 dark:bg-gray-900">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">To load real data, set the env vars. If you already did and still see this, check:</p>
+              <ul className="text-sm text-gray-500 dark:text-gray-400 list-disc list-inside space-y-2 max-w-xl mx-auto text-left">
+                <li><strong>Restart the dev server</strong> – Next.js reads .env only at start. Stop with Ctrl+C, then run <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">npm run dev</code> again.</li>
+                <li><strong>File and location</strong> – Use a file named exactly <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">.env</code> or <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">.env.local</code> in the <strong>project root</strong> (same folder as <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">package.json</code>).</li>
+                <li><strong>Variable names</strong> – Exactly <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">NEXT_PUBLIC_SUPABASE_URL</code> and <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">NEXT_PUBLIC_SUPABASE_ANON_KEY</code>, with no spaces around <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">=</code>.</li>
+              </ul>
+            </div>
+            {envCheck && (
+              <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                Server env check: URL set: {envCheck.supabaseUrlSet ? 'yes' : 'no'}, Key set: {envCheck.supabaseKeySet ? 'yes' : 'no'}.
+              </p>
+            )}
+            <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+              Showing sample data. Set Supabase env vars and restart the dev server to load real data.
+            </p>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Date</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Plot</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Worker</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Duration</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Enter</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Exit</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
+                  {SAMPLE_ROWS.map((row, i) => (
+                    <tr key={i} className="border-b border-gray-200 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50">
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{row.date}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{row.plot}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">{row.worker}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{row.duration ?? '—'}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{row.enter_plot}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{row.exit_plot ?? '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
 
         {!error && !configMissing && isLoading && (
