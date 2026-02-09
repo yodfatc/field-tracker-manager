@@ -12,15 +12,36 @@ interface RealDataTableProps {
 /* ---------- helpers ---------- */
 function formatDateDMY(value: string | null | undefined): string {
   if (!value) return '-';
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return '-';
 
+  // If it's ISO (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS...), format safely
+  if (/^\d{4}-\d{2}-\d{2}/.test(value)) {
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return '-';
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  // If it's already D/M/YYYY or DD/MM/YYYY, parse manually (DD/MM/YYYY)
+  // Accept separators / or -
+  const m = value.trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (m) {
+    const dd = m[1].padStart(2, '0');
+    const mm = m[2].padStart(2, '0');
+    const yyyy = m[3];
+    return `${dd}/${mm}/${yyyy}`;
+  }
+
+  // Fallback: try Date, but this is last resort
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return value; // show raw if unknown
   const day = String(d.getDate()).padStart(2, '0');
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const year = d.getFullYear();
-
   return `${day}/${month}/${year}`;
 }
+
 function parseDateTime(value: string | null | undefined): Date | null {
   if (!value) return null;
   const d = new Date(value);
