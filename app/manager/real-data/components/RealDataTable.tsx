@@ -9,240 +9,182 @@ interface RealDataTableProps {
   error?: string | null;
 }
 
+/* ---------- helpers ---------- */
+
+function parseDateTime(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function durationFromEnterExitMinutes(
+  enter: string | null,
+  exit: string | null
+): number | null {
+  const start = parseDateTime(enter);
+  const end = parseDateTime(exit);
+  if (!start || !end) return null;
+
+  const diffMs = end.getTime() - start.getTime();
+  if (diffMs <= 0) return 0;
+
+  return Math.round(diffMs / 60000); // minutes
+}
+
 /**
- * Parse duration string to minutes if needed
- * Handles formats like "6h 53m" or already numeric strings
+ * Fallback parsing for row.duration if timestamps are missing
+ * Supports:
+ *  - "6h 53m"
+ *  - "00:32:00"
+ *  - "32:10"
+ *  - "45"
  */
-function parseDuration(duration: string | null): number | null {
+function parseDurationToMinutes(duration: string | null): number | null {
   if (!duration) return null;
-  
-  // If it's already a number string, parse it
-  const numeric = parseFloat(duration);
-  if (!isNaN(numeric)) {
-    return Math.round(numeric);
+  const s = duration.trim();
+
+  // "6h 53m"
+  const h = s.match(/(\d+)\s*h/i);
+  const m = s.match(/(\d+)\s*m/i);
+  if (h || m) {
+    const hours = h ? parseInt(h[1], 10) : 0;
+    const mins = m ? parseInt(m[1], 10) : 0;
+    return hours * 60 + mins;
   }
-  
-  // Try to parse "Xh Ym" format
-  const hourMatch = duration.match(/(\d+)h/);
-  const minuteMatch = duration.match(/(\d+)m/);
-  
-  const hours = hourMatch ? parseInt(hourMatch[1], 10) : 0;
-  const minutes = minuteMatch ? parseInt(minuteMatch[1], 10) : 0;
-  
-  if (hours === 0 && minutes === 0) return null;
-  
-  return hours * 60 + minutes;
+
+  // "HH:MM:SS" or "MM:SS"
+  if (s.includes(':')) {
+    const parts = s.split(':').map((p) => parseInt(p, 10));
+    if (parts.some((n) => isNaN(n))) return null;
+
+    if (parts.length === 3) {
+      const [hh, mm, ss] = parts;
+      return hh * 60 + mm + Math.round(ss / 60);
+    }
+    if (parts.length === 2) {
+      const [mm, ss] = parts;
+      return mm + Math.round(ss / 60);
+    }
+  }
+
+  // numeric minutes
+  if (/^\d+(\.\d+)?$/.test(s)) {
+    return Math.round(parseFloat(s));
+  }
+
+  return null;
 }
 
-/**
- * Generate a stable composite key for React
- */
+function getDurationMinutes(row: RealDataRow): number | null {
+  // Prefer real timestamps
+  const fromTimes = durationFromEnterExitMinutes(
+    row.enter_plot,
+    row.exit_plot
+  );
+  if (fromTimes !== null) return fromTimes;
+
+  // Fallback to duration field
+  return parseDurationToMinutes(row.duration);
+}
+
 function getRowKey(row: RealDataRow, index: number): string {
-  return `${row.date}-${row.plot}-${row.worker}-${row.enter_plot || index}`;
+  return `${row.date}-${row.plot}-${row.worker}-${row.enter_plot ?? index}`;
 }
 
-export function RealDataTable({ data, isLoading, error }: RealDataTableProps) {
-  // Error state
+/* ---------- component ---------- */
+
+export function RealDataTable({
+  data,
+  isLoading,
+  error,
+}: RealDataTableProps) {
   if (error) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-        <div className="px-4 py-3">
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-            <p className="text-sm text-red-800 dark:text-red-400">{error}</p>
-          </div>
-        </div>
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+        <p className="text-sm text-red-700">{error}</p>
       </div>
     );
   }
 
-  // Loading state
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-        <div className="px-4 py-3">
-          <div className="flex items-center gap-3">
-            <svg
-              className="h-5 w-5 text-gray-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">All Activities</h2>
-          </div>
-        </div>
-        <div className="border-t border-gray-200 dark:border-gray-700">
-          <div className="overflow-x-auto p-4">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-800">
-                <tr>
-                  {[...Array(6)].map((_, i) => (
-                    <th
-                      key={i}
-                      className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
-                    >
-                      <div className="h-4 w-24 animate-pulse rounded bg-gray-300 dark:bg-gray-600" />
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
-                {[...Array(5)].map((_, i) => (
-                  <tr key={i}>
-                    {[...Array(6)].map((_, j) => (
-                      <td key={j} className="px-4 py-3">
-                        <div className="h-4 w-20 animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <div className="rounded-lg border border-gray-200 bg-white p-6">
+        <p className="text-sm text-gray-500">Loading…</p>
       </div>
     );
   }
 
-  // Empty state
   if (data.length === 0) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-        <div className="px-4 py-3">
-          <div className="flex items-center gap-3">
-            <svg
-              className="h-5 w-5 text-gray-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">All Activities</h2>
-            <span className="text-sm text-gray-600 dark:text-gray-400">Total: 0</span>
-          </div>
-        </div>
-        <div className="border-t border-gray-200 dark:border-gray-700">
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="mb-4 text-gray-400 dark:text-gray-500">
-              <svg
-                className="mx-auto h-12 w-12"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-            <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">No data available</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">No activities found.</p>
-          </div>
-        </div>
+      <div className="rounded-lg border border-gray-200 bg-white p-6">
+        <p className="text-sm text-gray-500">No activities found.</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-      {/* Card Header */}
-      <div className="px-4 py-3">
-        <div className="flex items-center gap-3">
-          <svg
-            className="h-5 w-5 text-gray-500"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">All Activities</h2>
-          <span className="text-sm text-gray-600 dark:text-gray-400">Total: {data.length}</span>
-        </div>
+    <div className="rounded-lg border border-gray-200 bg-white">
+      {/* Header */}
+      <div className="px-4 py-3 flex items-center gap-3">
+        <h2 className="text-lg font-semibold">All Activities</h2>
+        <span className="text-sm text-gray-500">Total: {data.length}</span>
       </div>
 
       {/* Table */}
-      <div className="border-t border-gray-200 dark:border-gray-700">
-        <div className="overflow-x-auto p-4">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Date
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Plot
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Worker Name
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Duration
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Enter Time
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                  Exit Time
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
-              {data.map((row, index) => {
-                const durationMinutes = parseDuration(row.duration);
-                return (
-                  <tr
-                    key={getRowKey(row, index)}
-                    className="border-b border-gray-200 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800/50"
-                  >
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                      {formatDate(row.date)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                      {row.plot}
-                    </td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {row.worker}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                      {formatDuration(durationMinutes)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                      {formatTime(row.enter_plot)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-                      {formatTime(row.exit_plot)}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+      <div className="border-t border-gray-200 overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                Date
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                Plot
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                Worker
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                Duration
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                Enter Time
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                Exit Time
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 bg-white">
+            {data.map((row, index) => {
+              const minutes = getDurationMinutes(row);
+
+              return (
+                <tr
+                  key={getRowKey(row, index)}
+                  className="hover:bg-gray-50"
+                >
+                  <td className="px-4 py-3 text-sm">
+                    {formatDate(row.date)}
+                  </td>
+                  <td className="px-4 py-3 text-sm">{row.plot}</td>
+                  <td className="px-4 py-3 text-sm font-medium">
+                    {row.worker}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    {minutes === null ? '-' : formatDuration(minutes)}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    {formatTime(row.enter_plot)}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    {formatTime(row.exit_plot)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );
