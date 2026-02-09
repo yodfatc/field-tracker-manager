@@ -10,8 +10,12 @@ export default function RealDataPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [configMissing, setConfigMissing] = useState(false);
-  const [envCheck, setEnvCheck] = useState<{ supabaseUrlSet: boolean; supabaseKeySet: boolean } | null>(null);
+  const [envCheck, setEnvCheck] = useState<{
+    supabaseUrlSet: boolean;
+    supabaseKeySet: boolean;
+  } | null>(null);
 
+  // Load real data from Supabase
   useEffect(() => {
     const supabase = getSupabase();
 
@@ -21,19 +25,39 @@ export default function RealDataPage() {
       return;
     }
 
-    supabase
-      .rpc('get_worker_plot_segments')
-      .then(({ data, error }) => {
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        const { data, error } = await supabase.rpc('get_worker_plot_segments');
+
+        if (cancelled) return;
+
         if (error) {
           setError(error.message);
           setData([]);
         } else {
           setData((data ?? []) as RealDataRow[]);
         }
-      })
-      .finally(() => setIsLoading(false));
+      } catch (e) {
+        if (cancelled) return;
+        setError(e instanceof Error ? e.message : 'Unknown error');
+        setData([]);
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
+  // Check server env vars if config is missing
   useEffect(() => {
     if (!configMissing) return;
 
