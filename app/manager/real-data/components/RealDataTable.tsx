@@ -10,7 +10,17 @@ interface RealDataTableProps {
 }
 
 /* ---------- helpers ---------- */
+function formatDateDMY(value: string | null | undefined): string {
+  if (!value) return '-';
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return '-';
 
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+
+  return `${day}/${month}/${year}`;
+}
 function parseDateTime(value: string | null | undefined): Date | null {
   if (!value) return null;
   const d = new Date(value);
@@ -165,7 +175,7 @@ export function RealDataTable({
                   className="hover:bg-gray-50"
                 >
                   <td className="px-4 py-3 text-sm">
-                    {formatDate(row.date)}
+                  {formatDateDMY(row.date)}
                   </td>
                   <td className="px-4 py-3 text-sm">{row.plot}</td>
                   <td className="px-4 py-3 text-sm font-medium">
