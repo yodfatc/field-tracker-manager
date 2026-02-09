@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getSupabase } from '@/app/lib/supabase';
 import { RealDataRow } from '../approvals/types';
+import { RealDataTable } from './components/RealDataTable';
 
 export default function RealDataPage() {
   const [data, setData] = useState<RealDataRow[]>([]);
@@ -81,18 +82,7 @@ export default function RealDataPage() {
         </p>
       )}
 
-      {error && <p className="text-red-600">{error}</p>}
-      {isLoading && <p>Loading…</p>}
-      {!isLoading && !error && data.length === 0 && <p>No data</p>}
-      {!isLoading && !error && data.length > 0 && (
-  <ul className="mt-4 space-y-2">
-    {data.map((row, i) => (
-      <li key={i} className="border p-2 text-sm">
-        <pre>{JSON.stringify(row, null, 2)}</pre>
-      </li>
-    ))}
-  </ul>
-)}
+      <RealDataTable data={data} isLoading={isLoading} error={error} />
     </div>
   );
 }
